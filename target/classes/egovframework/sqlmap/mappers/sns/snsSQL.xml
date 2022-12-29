@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.hhg.sns.service.SnsMapper">
+	<sql id="search">
+            <if test="searchKey == 'b_writer'">
+              AND B.U_NCNM LIKE '%'||#{searchVal}||'%'
+            </if>
+            <if test="searchKey == 'b_content'">
+              AND A.B_CONTENT LIKE '%'||#{searchVal}||'%'
+            </if>
+           	<!-- 이름, 내용, 제목 동시에 -->
+	</sql>
+	<select id="GetSnsList" resultType="boardVo" parameterType="egovframework.hhg.board.vo.BoardVO">
+		SELECT * FROM (
+			SELECT ROWNUM AS BOARD_NUM, C.* FROM
+ 					(SELECT
+			 				A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  , A.M_SEQ
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+
+						  , (SELECT COUNT(*) FROM TB_HEART_LOG WHERE BOARD_ID = A.BOARD_ID AND H_DEL_YN = 'N') AS B_LIKE 
+           			 	  , (SELECT COUNT(REPLY_ID) FROM TB_REPLY WHERE R_BOARD_ID = A.BOARD_ID AND R_DEL_YN = 'N') AS R_CNT
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+					 WHERE A.B_WRITER_ID = B.USER_ID
+					    AND A.B_TYPE = 1005
+					    AND A.M_SEQ = #{m_seq}
+					    <if test="searchKey != null">
+					    	<include refid="search" />
+					    </if>
+					    AND A.B_DEL_YN = 'N'
+					    ORDER BY B_REGIST_DT DESC
+		             ) C
+		             ) BO WHERE BOARD_NUM BETWEEN #{first_num} AND #{last_num}
+	</select>
+	<select id="getSnsListSearch" resultType="boardVo" parameterType="boardVo">
+		SELECT * FROM (
+			SELECT ROWNUM AS BOARD_NUM, C.* FROM 
+ 					(SELECT
+			 				A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  , A.M_SEQ
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+
+						  , (SELECT COUNT(*) FROM TB_HEART_LOG WHERE BOARD_ID = A.BOARD_ID AND H_DEL_YN = 'N') AS B_LIKE 
+						  , (SELECT COUNT(REPLY_ID) FROM TB_REPLY WHERE R_BOARD_ID = A.BOARD_ID AND R_DEL_YN = 'N') AS R_CNT
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+					 WHERE A.B_WRITER_ID = B.USER_ID
+					    AND A.B_TYPE = 1005
+					    AND A.M_SEQ = #{m_seq}
+					    <include refid="search" />
+					    AND A.B_DEL_YN = 'N'		    
+		  				ORDER BY B_REGIST_DT DESC
+		             ) C
+		             ) BO WHERE BOARD_NUM BETWEEN #{first_num} AND #{last_num}
+	</select>
+	<select id="getSnsListUserSearch" resultType="boardVo" parameterType="boardVo">
+		SELECT * FROM (
+ 					SELECT ROWNUM AS BOARD_NUM, C.* FROM (
+			 		SELECT	A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  , A.M_SEQ
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+
+						  , (SELECT COUNT(*) FROM TB_HEART_LOG WHERE BOARD_ID = A.BOARD_ID AND H_DEL_YN = 'N') AS B_LIKE 
+						  , (SELECT COUNT(REPLY_ID) FROM TB_REPLY WHERE R_BOARD_ID = A.BOARD_ID AND R_DEL_YN = 'N') AS R_CNT
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+					 WHERE A.B_WRITER_ID = #{user_id}
+					 	AND A.B_WRITER_ID = B.USER_ID
+					    AND A.B_TYPE = 1005
+					    AND A.M_SEQ = #{m_seq}
+					    AND A.B_DEL_YN = 'N'
+		    		  ORDER BY B_REGIST_DT DESC
+		             ) C
+		             ) BO WHERE BOARD_NUM BETWEEN #{first_num} AND #{last_num}
+	</select>
+	<select id="GetSnsScrollList" resultType="boardVo" parameterType="egovframework.hhg.board.vo.BoardVO">
+		SELECT * FROM
+ 					(SELECT
+			 				ROWNUM AS BOARD_NUM
+			         	  , A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  , A.M_SEQ
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+					 WHERE A.B_WRITER_ID = B.USER_ID
+					    AND A.B_TYPE = 1005
+					    AND A.M_SEQ = #{m_seq}
+					    AND A.B_DEL_YN = 'N'
+		             )
+ 		  WHERE BOARD_ID BETWEEN #{first_num} AND #{last_num}
+		  ORDER BY BOARD_ID ASC
+	</select>
+	<select id="getUpdateList" resultType="boardVo">
+		<!-- update했을 시 그 부분만 불러오기 -->
+		SELECT * FROM
+ 					(SELECT
+			 				ROWNUM AS BOARD_NUM
+			         	  , A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  , A.M_SEQ
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+					 WHERE A.B_WRITER_ID = B.USER_ID
+					    AND A.B_TYPE = 1005
+					    AND A.M_SEQ = #{m_seq}
+					    AND A.BOARD_ID = #{board_id}
+					    AND A.B_DEL_YN = 'N'
+		             )
+			  ORDER BY B_REGIST_DT DESC
+	</select>
+	<select id="getInsertList" resultType="boardVo">
+		<!-- insert했을 시 그 부분만 불러오기 -->
+		SELECT * FROM
+ 					(SELECT
+			 				ROWNUM AS BOARD_NUM
+			         	  , A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  , A.M_SEQ
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+					 WHERE A.B_WRITER_ID = B.USER_ID
+					    AND A.B_TYPE = 1005
+					    AND A.M_SEQ = #{m_seq}
+					    AND A.B_REGIST_DT = (SELECT MAX(B_REGIST_DT) FROM TB_BOARD)
+					    AND A.B_DEL_YN = 'N'
+		             )
+			  ORDER BY B_REGIST_DT DESC
+	</select>
+	<select id="getReplyList" resultType="egovframework.hhg.reply.vo.ReplyVO" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+			SELECT REPLY_ID
+				  ,A.R_BOARD_ID
+				  ,A.R_USER_ID
+				  ,U_NCNM AS R_WRITER
+				  ,A.R_CONTENT
+				  ,A.R_REGIST_DT
+				  ,A.R_UPDATE_DT
+				  ,A.R_PAR_NO
+				  ,A.R_DEL_YN
+			  FROM TB_REPLY A
+			  	  ,TB_USER B
+			 WHERE R_BOARD_ID = #{r_board_id}
+			   AND A.R_USER_ID = B.USER_ID
+			   AND A.R_DEL_YN = 'N'
+			 ORDER BY R_REGIST_DT ASC
+	</select>
+	<select id="getReplyInsertList" resultType="egovframework.hhg.reply.vo.ReplyVO" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+		SELECT REPLY_ID
+				  ,A.R_BOARD_ID
+				  ,A.R_USER_ID
+				  ,U_NCNM AS R_WRITER
+				  ,A.R_CONTENT
+				  ,A.R_REGIST_DT
+				  ,A.R_UPDATE_DT
+				  ,A.R_PAR_NO
+				  ,A.R_DEL_YN
+			  FROM TB_REPLY A
+			  	  ,TB_USER B
+			 WHERE R_BOARD_ID = #{r_board_id}
+			   AND A.R_USER_ID = B.USER_ID
+			   AND A.R_DEL_YN = 'N'
+			   AND A.R_REGIST_DT = (SELECT MAX(R_REGIST_DT) FROM TB_REPLY)
+			 ORDER BY R_REGIST_DT ASC
+	</select>
+	<select id="getReplyUpdateList" resultType="egovframework.hhg.reply.vo.ReplyVO" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+		SELECT REPLY_ID
+				  ,A.R_BOARD_ID
+				  ,A.R_USER_ID
+				  ,U_NCNM AS R_WRITER
+				  ,A.R_CONTENT
+				  ,A.R_REGIST_DT
+				  ,A.R_UPDATE_DT
+				  ,A.R_PAR_NO
+				  ,A.R_DEL_YN
+			  FROM TB_REPLY A
+			  	  ,TB_USER B
+			 WHERE R_BOARD_ID = #{r_board_id}
+			   AND A.R_USER_ID = B.USER_ID
+			   AND A.R_DEL_YN = 'N'
+			   AND A.REPLY_ID = #{reply_id}
+			 ORDER BY R_REGIST_DT ASC
+	</select>
+	<select id="getReplyCnt" resultType="Integer" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+		SELECT COUNT(REPLY_ID) AS R_NEW_CNT
+		  FROM TB_REPLY A
+			  	  ,TB_USER B
+		 WHERE R_BOARD_ID = #{r_board_id}
+		   AND A.R_USER_ID = B.USER_ID
+		   AND A.R_DEL_YN = 'N'
+		 ORDER BY R_REGIST_DT ASC
+	</select>
+	<select id="getHeartList" resultType="boardVo">
+		SELECT * FROM TB_HEART
+	</select>
+	<select id="getHeartLogCnt" resultType="Integer">
+		SELECT COUNT(USER_ID) AS H_CNT  
+          FROM TB_heart_LOG 
+         WHERE BOARD_ID = #{board_id}
+           AND USER_ID = #{b_writer_id}
+         GROUP BY USER_ID
+	</select>
+	<select id="getHeartLogNew" resultType="Integer">
+		SELECT COUNT(BOARD_ID) AS H_CNT  
+          FROM TB_heart_LOG 
+         WHERE BOARD_ID = #{board_id}
+           AND H_DEL_YN = 'N'
+         GROUP BY BOARD_ID
+	</select>
+	<insert id="snsInsertProc" parameterType="boardVo">
+		INSERT INTO TB_BOARD
+			(
+			BOARD_ID,
+			B_WRITER_ID, 
+			B_CONTENT,
+			B_REGIST_DT,
+			B_UPDATE_DT,
+			B_DEL_YN,
+			B_TYPE,
+			M_SEQ
+			)
+			VALUES
+			(
+			SEQ_BOARD.NEXTVAL,
+			#{b_writer_id},
+			#{b_content},
+			TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
+			TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
+			'N',
+			1005,
+			#{m_seq}
+			)
+	</insert>
+	<insert id="snsReplyProc" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+		INSERT INTO TB_REPLY
+		VALUES (
+				SEQ_REPLY.NEXTVAL
+			   ,#{r_board_id}
+			   ,#{r_user_id}
+			   ,#{r_content}
+  		 	   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+ 		 	   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+ 		 	   ,#{reply_id, jdbcType=INTEGER}
+ 		 	   ,'N'
+				)
+	</insert>
+	<update id="snsReplyUpdateProc" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+		UPDATE TB_REPLY
+		   SET R_CONTENT = #{r_content}
+		 WHERE REPLY_ID = #{reply_id}
+	</update>
+	<update id="snsUpdateProc" parameterType="boardVO">
+		UPDATE TB_BOARD
+		   SET B_CONTENT = #{b_content}
+		 WHERE BOARD_ID = #{board_id} 
+	</update>
+	<update id="snsReplyCount">
+		UPDATE TB_BOARD A
+		   SET A.B_RCOUNT = A.B_RCOUNT + #{amount}
+		 WHERE A.BOARD_ID = #{board_id}
+	</update>
+	<update id="snsReplyDeleteCount">
+		UPDATE TB_BOARD A
+		   SET A.B_RCOUNT = A.B_RCOUNT - #{amount}
+		 WHERE A.BOARD_ID = #{board_id}
+	</update>
+	<update id="snsDeleteProc" parameterType="boardVo">
+		UPDATE TB_BOARD SET B_DEL_YN = 'Y' WHERE BOARD_ID = #{board_id}
+	</update>
+	<update id="snsReplyDeleteProc" parameterType="boardVo">
+		UPDATE TB_REPLY SET R_DEL_YN = 'Y' WHERE REPLY_ID = #{reply_id}
+	</update>
+</mapper>

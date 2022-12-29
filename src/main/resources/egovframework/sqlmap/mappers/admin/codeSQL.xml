@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.hhg.code.service.CodeMapper">
+	
+	<sql id="search">
+	
+		<if test="searchKey == 'code_nm'">
+			AND CODE_NM LIKE '%'||#{searchVal, jdbcType=VARCHAR}||'%'
+		</if>
+		<if test="searchKey == 'code_id'">
+			AND CODE_ID LIKE '%'||#{searchVal, jdbcType=VARCHAR}||'%'
+		</if>
+		<if test="searchKey == 'all'">
+			AND CODE_ID LIKE '%'||#{searchVal, jdbcType=VARCHAR}||'%'
+			 OR CODE_NM LIKE '%'||#{searchVal, jdbcType=VARCHAR}||'%'
+		</if>
+	
+	</sql>
+
+	<select id="getCodeList" resultType="egovframework.hhg.utills.vo.CodeVO">
+	SELECT * FROM (
+		SELECT 
+				ROWNUM AS CODE_NUM
+			  , LEVEL
+			  ,  CODE_ID
+              , PAR_CODE_ID
+			  , CODE_NM
+		   	  , CODE_REGIST_DT
+			  , CODE_DEL_DT
+			  , CODE_DEL_YN
+			  , CODE_CONTENT
+		  FROM TB_CODE
+	     START WITH PAR_CODE_ID IS NULL
+	   CONNECT BY PRIOR CODE_ID = PAR_CODE_ID
+		 ORDER SIBLINGS BY CODE_ID ASC
+		 ) ORDER BY CODE_REGIST_DT DESC
+	</select>
+	<select id="getCodeMainList" resultType="egovframework.hhg.utills.vo.CodeVO">
+	    SELECT * FROM (
+		SELECT 
+			    CODE_ID AS CODE_MAIN_ID
+              , PAR_CODE_ID
+			  , CODE_NM
+		   	  , CODE_REGIST_DT
+			  , CODE_DEL_DT
+			  , CODE_DEL_YN
+			  , CODE_CONTENT
+		  FROM TB_CODE
+	     WHERE PAR_CODE_ID IS NULL
+	     	<include refid="search" />
+	     START WITH PAR_CODE_ID IS NULL
+	   CONNECT BY PRIOR CODE_ID = PAR_CODE_ID
+		 ORDER SIBLINGS BY CODE_ID ASC
+		 ) WHERE PAR_CODE_ID IS NULL
+		 ORDER BY CODE_DEL_YN ASC, CODE_REGIST_DT DESC
+	</select>
+	<select id="getCodeMiddleList" resultType="egovframework.hhg.utills.vo.CodeVO">
+	SELECT * FROM (
+		SELECT 
+			    CODE_ID AS CODE_MID_ID
+              , PAR_CODE_ID
+			  , CODE_NM
+  			  , CODE_REGIST_DT
+			  , CODE_DEL_DT
+			  , CODE_DEL_YN
+			  , CODE_CONTENT
+		  FROM TB_CODE
+	     WHERE PAR_CODE_ID = #{code_main_id}
+	     START WITH PAR_CODE_ID = #{code_main_id}
+	   CONNECT BY PRIOR CODE_ID = PAR_CODE_ID
+		 ORDER SIBLINGS BY CODE_ID ASC
+		 ) ORDER BY CODE_DEL_YN ASC, CODE_REGIST_DT DESC
+	</select>
+	<select id="getCodeSubList" resultType="egovframework.hhg.utills.vo.CodeVO">
+		SELECT * FROM (
+		SELECT 
+			    CODE_ID AS CODE_SUB_ID
+              , PAR_CODE_ID
+			  , CODE_NM
+		   	  , CODE_REGIST_DT
+			  , CODE_DEL_DT
+			  , CODE_DEL_YN
+			  , CODE_CONTENT
+		  FROM TB_CODE
+	     WHERE PAR_CODE_ID = #{code_mid_id}
+	     START WITH PAR_CODE_ID = #{code_main_id}
+	   CONNECT BY PRIOR CODE_ID = PAR_CODE_ID
+		 ORDER SIBLINGS BY CODE_ID ASC
+		 ) ORDER BY CODE_DEL_YN ASC, CODE_REGIST_DT DESC
+	</select>
+	<update id="codeDelete" parameterType="egovframework.hhg.utills.vo.CodeVO">
+		UPDATE TB_CODE SET CODE_DEL_YN = 'Y' WHERE CODE_ID = #{code_id}
+	</update>
+	<insert id="codeInsert" parameterType="egovframework.hhg.utills.vo.CodeVO">
+		INSERT INTO TB_CODE 
+			  (
+			  CODE_ID,
+			  PAR_CODE_ID,
+			  CODE_NM,
+			  CODE_REGIST_DT,
+			  CODE_DEL_DT,
+			  CODE_DEL_YN,
+			  CODE_CONTENT
+			  )
+		VALUES 
+			  (
+			  #{code_id},
+			  #{par_code_id, jdbcType=VARCHAR},
+			  #{code_nm},
+			  TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
+			  NULL,
+			  'N',
+			  #{code_content}
+			  )
+	</insert>
+	<update id="codeUpdate" parameterType="egovframework.hhg.utills.vo.CodeVO">
+		UPDATE TB_CODE 
+		   SET CODE_NM = #{code_nm},
+		       CODE_ID = #{code_new_id},
+		       PAR_CODE_ID = #{par_code_id, jdbcType=VARCHAR},
+		       CODE_CONTENT = #{code_content},
+		       CODE_DEL_YN = #{code_del_yn}
+		 WHERE CODE_ID = #{code_id} 
+	</update>
+	<update id="codeDownUpdate" parameterType="egovframework.hhg.utills.vo.CodeVO">
+		UPDATE TB_CODE
+		   SET PAR_CODE_ID = #{code_new_id},
+		   CODE_DEL_YN = #{code_del_yn}
+		 WHERE PAR_CODE_ID = #{code_id}
+	</update>
+</mapper>

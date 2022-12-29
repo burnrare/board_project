@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.hhg.login.service.MenuMapper">
+
+
+	<resultMap id="boardList" type="boardVo">
+		<result property="board_id" column="board_id" />
+		<result property="b_title" column="b_title" />
+		<result property="b_content" column="b_content" />
+		<result property="b_m_seq" column="b_m_seq" />
+		<result property="searchVal" column="searchVal" />
+	</resultMap>
+	<resultMap id="menuList" type="egovframework.hhg.login.vo.MenuVO">
+		<result property="m_seq" column="m_seq" />
+		<result property="ty_id" column="ty_id" />
+		<result property="ty_nm" column="ty_nm" />
+		<result property="m_url" column="m_url" />
+		<result property="m_nm" column="m_nm" />
+		<result property="m_regist_dt" column="m_regist_dt" />
+		<result property="m_delete_dt" column="m_delete_dt" />
+		<result property="m_del_yn" column="m_del_yn" />
+		<result property="user_id" column="user_id" />
+		<result property="auth_seq" column="auth_seq" />
+		<result property="auth_type" column="auth_type" />
+		<collection property="boardList" javaType="List" resultMap="boardList"></collection>
+	</resultMap>
+
+		<sql id="b_search">
+			<if test="searchVal != null">
+              AND B_TITLE LIKE '%'||#{searchVal}||'%'
+              AND B_CONTENT LIKE '%'||#{searchVal}||'%'
+            </if>
+		</sql>
+		
+		<sql id="s_search">
+			<if test="searchVal != null">
+              AND SUR_TITLE LIKE '%'||#{searchVal}||'%'
+            </if>
+		</sql>
+		
+	<select id="getMenuList" resultType="egovframework.hhg.login.vo.MenuVO">
+		SELECT 
+			  A.M_SEQ,
+			  A.TY_ID,
+			  A.M_URL,
+			  A.M_NM,
+			  A.M_REGIST_DT,
+			  A.M_DELETE_DT,
+			  A.M_DEL_YN,
+			  A.USER_ID,
+			  B.AUTH_SEQ,
+			  B.M_SEQ,
+			  B.AUTH_TYPE
+          FROM TB_MENU A, TB_MENU_AUTH B 
+         WHERE A.M_DEL_YN = 'N' 
+           AND A.M_SEQ = B.M_SEQ
+         ORDER BY A.M_SEQ
+	</select>
+	
+	<select id="getMenuListAll" resultType="egovframework.hhg.login.vo.MenuVO">
+		SELECT 
+				ROWNUM AS M_NUM,
+				M_SEQ, 
+				TY_ID, 
+				(SELECT TYNM FROM TB_BOARD_TYPE WHERE A.TY_ID = TY_ID) AS TY_NM, 
+				M_URL, 
+				M_NM, 
+				M_REGIST_DT, 
+				M_DELETE_DT, 
+				M_DEL_YN, 
+				USER_ID 
+		  FROM TB_MENU A
+		  ORDER BY M_SEQ
+	</select>
+	
+	<select id="getMenuTyList" resultType="egovframework.hhg.login.vo.MenuVO">
+		SELECT 
+	          TY_ID,
+	          TYNM AS TY_NM
+          FROM TB_BOARD_TYPE
+	</select>
+	
+	<select id="getUserMenuAuthList" resultType="egovframework.hhg.login.vo.MenuVO" parameterType="egovframework.hhg.login.vo.MenuVO">
+		SELECT * 
+		  FROM TB_MENU_AUTH 
+		  <choose>
+		  	<when test="auth_type == null or auth_type == 0">
+		  		WHERE AUTH_TYPE IS NULL
+		  	</when>
+		  	<otherwise>
+		  		WHERE AUTH_TYPE = #{auth_type}
+		  	</otherwise>
+		  </choose>
+	</select>
+	
+	<select id="getUserMenuList" resultType="egovframework.hhg.login.vo.MenuVO" parameterType="egovframework.hhg.login.vo.MenuVO">
+		SELECT * FROM TB_MENU WHERE M_SEQ = #{m_seq, jdbcType=VARCHAR} AND M_DEL_YN = 'N'
+	</select>
+	
+	<select id="getUserBoardList" resultType="egovframework.hhg.board.vo.BoardVO" parameterType="egovframework.hhg.login.vo.MenuVO">
+		SELECT * FROM TB_BOARD WHERE M_SEQ = #{m_seq} 
+		<include refid="b_search" />
+		AND B_DEL_YN = 'N'
+	</select>
+	
+	<select id="getUserSurveyList" resultType="egovframework.hhg.survey.vo.SurveyVO" parameterType="egovframework.hhg.login.vo.MenuVO">
+		SELECT * FROM TB_SURVEY WHERE M_SEQ = #{m_seq} 
+		<include refid="s_search" />
+	</select>
+	
+	<select id="getMenuAuthList" resultType="egovframework.hhg.login.vo.MenuVO">
+		SELECT * FROM TB_MENU_AUTH ORDER BY AUTH_SEQ
+	</select>
+	
+	<select id="getMenuAuthType" resultType="egovframework.hhg.login.vo.MenuVO">
+		SELECT * FROM TB_MENU_AUTH WHERE M_SEQ = #{m_seq, jdbcType=VARCHAR}
+	</select>
+	
+	<select id="getSearchAll" resultType="egovframework.hhg.board.vo.BoardVO">
+		SELECT
+  			   A.BOARD_ID, 
+  			   A.B_TITLE,
+  			   A.B_CONTENT,
+  			   A.M_SEQ as b_m_seq,
+  			   A.B_TYPE,
+  			   A.B_WRITER_ID,
+  			   A.B_REGIST_DT
+		  FROM 
+			   TB_BOARD A
+		 WHERE A.B_TYPE = #{b_type}
+		   AND A.B_DEL_YN = 'N'
+		 	<include refid="b_search" />
+	</select>
+	
+	<select id="getMenuLogYear" resultType="egovframework.hhg.login.vo.LogVO">
+			    SELECT *
+				FROM (
+					SELECT TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY') AS YEAR_DT,
+					B.M_NM, B.M_SEQ
+				  FROM TB_MENU_LOG A RIGHT OUTER JOIN TB_MENU B ON A.M_SEQ = B.M_SEQ
+				)
+				PIVOT
+				(
+				COUNT(*)
+				FOR YEAR_DT IN (2020 as year_1, 2021 as year_2, 2022 as year_3)
+				)
+				ORDER BY M_SEQ
+	</select>
+	
+	<select id="getMenuLogMonth" resultType="egovframework.hhg.login.vo.LogVO">
+		 SELECT B.M_NM, B.M_SEQ
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '01', 1, 0)) AS LO_1
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '02', 1, 0)) AS LO_2
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '03', 1, 0)) AS LO_3
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '04', 1, 0)) AS LO_4
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '05', 1, 0)) AS LO_5
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '06', 1, 0)) AS LO_6
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '07', 1, 0)) AS LO_7
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '08', 1, 0)) AS LO_8
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '09', 1, 0)) AS LO_9
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '10', 1, 0)) AS LO_10
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '11', 1, 0)) AS LO_11
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'MM'), '12', 1, 0)) AS LO_12
+				FROM TB_MENU_LOG A RIGHT OUTER JOIN TB_MENU B ON A.M_SEQ = B.M_SEQ
+				GROUP BY B.M_NM, B.M_SEQ
+				ORDER BY B.M_SEQ
+	</select>
+	
+	<select id="getMenuLogDay" resultType="egovframework.hhg.login.vo.LogVO">
+		SELECT  B.M_NM, B.M_SEQ
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '01', 1, 0)) AS LO_1
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '02', 1, 0)) AS LO_2
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '03', 1, 0)) AS LO_3
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '04', 1, 0)) AS LO_4
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '05', 1, 0)) AS LO_5
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '06', 1, 0)) AS LO_6
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '07', 1, 0)) AS LO_7
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '08', 1, 0)) AS LO_8
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '09', 1, 0)) AS LO_9
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '10', 1, 0)) AS LO_10
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '11', 1, 0)) AS LO_11
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '12', 1, 0)) AS LO_12
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '13', 1, 0)) AS LO_13
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '14', 1, 0)) AS LO_14
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '15', 1, 0)) AS LO_15
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '16', 1, 0)) AS LO_16
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '17', 1, 0)) AS LO_17
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '18', 1, 0)) AS LO_18
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '19', 1, 0)) AS LO_19
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '20', 1, 0)) AS LO_20
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '21', 1, 0)) AS LO_21
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '22', 1, 0)) AS LO_22
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '23', 1, 0)) AS LO_23
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '24', 1, 0)) AS LO_24
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '25', 1, 0)) AS LO_25
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '26', 1, 0)) AS LO_26
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '27', 1, 0)) AS LO_27
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '28', 1, 0)) AS LO_28
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '29', 1, 0)) AS LO_29
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '30', 1, 0)) AS LO_30
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'DD'), '31', 1, 0)) AS LO_31
+				FROM TB_MENU_LOG A RIGHT OUTER JOIN TB_MENU B ON A.M_SEQ = B.M_SEQ
+				GROUP BY B.M_NM, B.M_SEQ
+				ORDER BY B.M_SEQ
+	
+	</select>
+	
+	<select id="getMenuLogTime" resultType="egovframework.hhg.login.vo.LogVO">
+	SELECT  B.M_NM, B.M_SEQ 
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '01', 1, 0)) AS LO_1
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '02', 1, 0)) AS LO_2
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '03', 1, 0)) AS LO_3
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '04', 1, 0)) AS LO_4
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '05', 1, 0)) AS LO_5
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '06', 1, 0)) AS LO_6
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '07', 1, 0)) AS LO_7
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '08', 1, 0)) AS LO_8
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '09', 1, 0)) AS LO_9
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '10', 1, 0)) AS LO_10
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '11', 1, 0)) AS LO_11
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '12', 1, 0)) AS LO_12
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '13', 1, 0)) AS LO_13
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '14', 1, 0)) AS LO_14
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '15', 1, 0)) AS LO_15
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '16', 1, 0)) AS LO_16
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '17', 1, 0)) AS LO_17
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '18', 1, 0)) AS LO_18
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '19', 1, 0)) AS LO_19
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '20', 1, 0)) AS LO_20
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '21', 1, 0)) AS LO_21
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '22', 1, 0)) AS LO_22
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '23', 1, 0)) AS LO_23
+				,SUM(DECODE(TO_CHAR(TO_DATE(ML_LOG_DT, 'YYYY-MM-DD HH24:MI:SS'), 'HH24'), '00', 1, 0)) AS LO_0
+				FROM TB_MENU_LOG A RIGHT OUTER JOIN TB_MENU B ON A.M_SEQ = B.M_SEQ
+				GROUP BY B.M_NM, B.M_SEQ
+				ORDER BY B.M_SEQ
+	</select>
+	<select id="selectCompareTime" resultType="int" parameterType="String">
+		<![CDATA[
+		SELECT 
+			(
+			  (SELECT SYSDATE FROM DUAL) 
+			- (SELECT TO_DATE(#{regTime},'YYYY-MM-DD hh24:mi:ss') 
+			FROM DUAL )
+			)*24*60*60
+		FROM DUAL
+	]]>
+	</select>
+	<insert id="getMenuRegist" parameterType="egovframework.hhg.login.vo.MenuVO">
+		<selectKey keyProperty="m_seq" order="BEFORE" resultType="int">
+					SELECT M_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO 
+		TB_MENU 
+		VALUES (
+				#{m_seq}, 
+				#{ty_id}, 
+				#{m_url}, 
+				#{m_nm}, 
+				TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'), 
+				TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
+				'N',
+				#{user_id}
+				)
+	</insert>
+	<insert id="getMenuAuthRegist" parameterType="egovframework.hhg.login.vo.MenuVO">
+		INSERT INTO 
+		TB_MENU_AUTH
+				(
+				AUTH_SEQ,
+				M_SEQ,
+				AUTH_TYPE
+				)
+		VALUES (
+				AUTH_SEQ.NEXTVAL, 
+				M_SEQ.CURRVAL, 
+				#{auth_type, jdbcType=INTEGER}
+				)
+	</insert>
+	<insert id="getMenuAuthUpdate" parameterType="egovframework.hhg.login.vo.MenuVO">
+		INSERT INTO 
+		TB_MENU_AUTH
+			   (
+				AUTH_SEQ,
+				M_SEQ,
+				AUTH_TYPE
+				)
+		VALUES (
+				AUTH_SEQ.NEXTVAL, 
+				#{m_seq},
+				#{auth_type, jdbcType=INTEGER}
+				)
+	</insert>
+	<update id="getMenuDelUpdate" parameterType="egovframework.hhg.login.vo.MenuVO">
+		UPDATE TB_MENU
+		   SET M_DEL_YN = #{m_del_yn}
+		 WHERE M_SEQ = #{m_seq}
+	</update>
+	<update id="getMenuUpdate" parameterType="egovframework.hhg.login.vo.MenuVO">
+		UPDATE TB_MENU
+		   SET M_NM = #{m_nm}
+		 WHERE M_SEQ = #{m_seq}
+	</update>
+	<delete id="getMenuDelete" parameterType="egovframework.hhg.login.vo.MenuVO">
+		DELETE FROM TB_MENU WHERE m_seq = #{m_seq}
+	</delete>
+	<delete id="getMenuAuthDelete" parameterType="egovframework.hhg.login.vo.MenuVO">
+		DELETE FROM TB_MENU_AUTH WHERE m_seq = #{m_seq} 
+	</delete>
+	<delete id="getMenuBoardDelete" parameterType="egovframework.hhg.login.vo.MenuVO">
+		DELETE FROM TB_BOARD WHERE m_seq = #{m_seq} 
+	</delete>
+	<delete id="getMenuLogDel" parameterType="egovframework.hhg.login.vo.MenuVO">
+		DELETE FROM TB_MENU_LOG WHERE m_seq = #{m_seq}
+	</delete>
+	<insert id="getMenuLog" parameterType="egovframework.hhg.login.vo.MenuVO">
+		INSERT INTO TB_MENU_LOG VALUES 
+				(
+					ML_SEQ.NEXTVAL,
+					#{m_seq},
+					TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+				)
+	</insert>
+</mapper>

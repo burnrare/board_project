@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="egovframework.hhg.board.service.BoardMapper">
+	
+		<sql id="search">
+			<if test="searchKey == 'title'">
+              AND A.B_TITLE LIKE '%'||#{searchVal}||'%'
+            </if>
+            <if test="searchKey == 'writer_id'">
+              AND B.U_NCNM LIKE '%'||#{searchVal}||'%'
+            </if>
+            <if test="searchKey == 'content'">
+              AND A.B_CONTENT LIKE '%'||#{searchVal}||'%'
+            </if>
+            <if test="searchKey == 'all'">
+              AND 1 = 1
+           	</if>
+           	<!-- 이름, 내용, 제목 동시에 -->
+		</sql>
+	
+		<select id="countBoardList" resultType="_int">
+			SELECT COUNT(*) FROM
+ 					(SELECT
+			 				ROWNUM AS BOARD_NUM
+			         	  , A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , LEVEL
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_TITLE
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_BOARD_CNT
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+                     WHERE A.B_DEL_YN = 'N'
+                       AND A.B_WRITER_ID = B.USER_ID
+                       AND A.B_TYPE IS NULL
+                       	<include refid="search" />
+	                 START WITH B_GRP_NO IS NULL
+	               CONNECT BY PRIOR BOARD_ID = B_GRP_NO
+		             ORDER SIBLINGS BY BOARD_ID DESC
+		             )
+		</select>
+	
+		<select id="getBoardList" resultType="boardVo" parameterType="boardVo">
+	 	SELECT * FROM
+ 					(SELECT
+			 				ROWNUM AS BOARD_NUM
+			         	  , A.BOARD_ID
+			         	  , A.B_WRITER_ID
+			         	  , LEVEL
+			         	  , U_NCNM AS NICKNAME
+			         	  , A.B_TITLE
+			         	  , A.B_CONTENT
+			         	  
+			         	  , A.B_BOARD_CNT
+			         	  , A.B_DEL_YN
+			         	  , A.B_REGIST_DT
+			         	  , A.B_UPDATE_DT
+			         	  
+			         	  , A.B_RCOUNT
+			         	  , A.B_TYPE
+           			  FROM TB_BOARD A
+           	              , TB_USER B
+					 WHERE A.B_WRITER_ID = B.USER_ID
+					   AND A.B_TYPE IS NULL
+                       <include refid="search" />
+	                 START WITH B_GRP_NO IS NULL
+	               CONNECT BY PRIOR BOARD_ID = B_GRP_NO
+		             ORDER SIBLINGS BY BOARD_ID DESC
+		             )
+		  WHERE BOARD_NUM BETWEEN #{firstIndex} AND #{lastIndex}
+ 	</select>
+ 	
+ 	<insert id="boardInsertProc" parameterType="boardVo">
+		INSERT INTO TB_BOARD
+			   (
+			   BOARD_ID,
+			   B_WRITER_ID,
+			   B_TITLE,
+			   B_CONTENT,
+			   B_BOARD_CNT,
+			   B_DEL_YN,
+			   B_REGIST_DT,
+			   B_UPDATE_DT,
+			   B_GRP_NO,
+			   B_TYPE
+			   )
+		VALUES (
+				SEQ_BOARD.NEXTVAL
+			   ,#{b_writer_id}	
+			   ,#{b_title}
+			   ,#{b_content}
+			   ,0
+			   ,'N'
+			   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			   ,#{board_id, jdbcType=INTEGER}
+			   ,#{ty_id, jdbcType=INTEGER}
+			   )
+ 	</insert>
+ 	
+	<select id="boardPost" resultType="boardVo" parameterType="boardVo">
+         SELECT A.BOARD_ID
+         	  , A.B_TITLE
+         	  , A.B_CONTENT
+         	  , (SELECT U_NCNM FROM TB_USER WHERE USER_ID = A.B_WRITER_ID) AS NICKNAME
+         	  , A.B_WRITER_ID
+         	  , A.B_BOARD_CNT
+
+         	  , A.B_DEL_YN
+         	  , A.B_REGIST_DT
+         	  , A.B_UPDATE_DT
+         	  
+         	  , A.B_GRP_NO
+         	  , A.B_TYPE
+         	  , A.B_RCOUNT
+           FROM TB_BOARD A
+          WHERE B_DEL_YN = 'N'
+          	AND BOARD_ID = #{board_id}
+ 	</select>
+ 	
+ 	<update id="boardCntUp" parameterType="boardVo">
+		UPDATE TB_BOARD
+		   SET B_BOARD_CNT = (B_BOARD_CNT + 1)
+		 WHERE BOARD_ID = #{board_id}
+ 	</update>
+ 	
+ 	<update id="boardPostUp" parameterType="boardVo">
+ 		UPDATE TB_BOARD
+ 		   SET B_TITLE = #{b_title}
+ 		      ,B_CONTENT = #{b_content}
+ 		      ,B_UPDATE_DT = TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+ 		 WHERE BOARD_ID = #{board_id} 
+ 	</update>
+ 	
+ 	<update id="boardPostDe" parameterType="boardVo">
+ 		UPDATE TB_BOARD
+ 		   SET B_DEL_YN = 'Y'
+ 		 WHERE BOARD_ID = #{board_id}
+ 	</update>
+ 	
+ 	<select id="boardType" parameterType="boardVo" resultType="boardVo">
+ 		SELECT TY_ID
+ 		      ,TYNM
+ 		  FROM TB_BOARD_TYPE
+ 	</select>
+ 	
+ 	<select id="noticeList" parameterType="boardVo" resultType="boardVo">
+ 		SELECT ROWNUM AS BOARD_NUM
+ 			  ,A.BOARD_ID
+ 			  ,A.B_TITLE
+ 			  ,A.B_CONTENT
+ 			  ,(SELECT U_NCNM FROM TB_USER WHERE USER_ID = A.B_WRITER_ID) AS NICKNAME
+ 			  ,A.B_REGIST_DT
+ 			  ,A.B_TYPE
+ 			  ,A.B_RCOUNT
+ 			  ,A.B_BOARD_CNT
+ 		  FROM TB_BOARD A
+ 		      ,TB_USER B
+ 		 WHERE A.B_TYPE = 1000
+ 		   AND A.B_DEL_YN = 'N'
+ 		   AND A.B_WRITER_ID = B.USER_ID
+ 	</select>
+ 	
+	<update id="boardReplyCount">
+		UPDATE TB_BOARD A
+		   SET A.B_RCOUNT = A.B_RCOUNT + #{amount}
+		 WHERE A.BOARD_ID = #{board_id}
+	</update>
+	
+</mapper>

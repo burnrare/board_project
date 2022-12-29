@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.hhg.survey.service.SurveyMapper">
+
+	<resultMap id="optionList" type="egovframework.hhg.survey.vo.SurveyUtileVO">
+		<result property="sur_id" column="sur_id" />
+		<result property="que_id" column="que_id" />
+		<result property="option_id" column="option_id" />
+		<result property="option_nm" column="option_nm" />
+		<result property="option_num" column="option_num" /> 
+		<result property="option_type" column="option_type" /> 
+		<result property="ans_seq" column="ans_seq" />
+		<result property="que_id" column="que_id" />
+		<result property="option_id" column="option_id" />
+		<result property="user_id" column="user_id" />
+		<result property="ans_con" column="ans_con" /> 
+		<result property="ans_dt" column="ans_dt" /> 
+		<result property="ans_up_dt" column="ans_up_dt" /> 
+		<result property="ans_up_user_id" column="ans_up_user_id" /> 
+		<result property="ans_etc_con" column="ans_etc_con" /> 
+	</resultMap>
+	
+<!-- 	<resultMap id="answerList" type="egovframework.hhg.survey.vo.SurveyAnswerVO">
+		<result property="ans_seq" column="ans_seq" />
+		<result property="que_id" column="que_id" />
+		<result property="option_id" column="option_id" />
+		<result property="user_id" column="user_id" />
+		<result property="ans_con" column="ans_con" /> 
+		<result property="ans_dt" column="ans_dt" /> 
+		<result property="ans_up_dt" column="ans_up_dt" /> 
+		<result property="ans_up_user_id" column="ans_up_user_id" /> 
+		<result property="ans_etc_con" column="ans_etc_con" /> 
+		<result property="sel_option_id" column="sel_option_id" /> 
+	</resultMap> -->
+	
+	<resultMap id="questionList" type="egovframework.hhg.survey.vo.SurveyQuestionVO">
+		<result property="que_id" column="que_id" />
+		<result property="sur_id" column="sur_id" />
+		<result property="cate_id" column="cate_id" />
+		<result property="que_content" column="que_content" />
+		<result property="que_type" column="que_type" />
+		<result property="que_par_id" column="que_par_id" />
+		<result property="que_dt" column="que_dt" />
+		<result property="que_up_dt" column="que_up_dt" />
+		<result property="que_del_yn" column="que_del_yn" />
+		<result property="que_page_num" column="que_page_num" />
+		<result property="sur_num" column="sur_num" />
+		<result property="cate_nm" column="cate_nm" />
+		<result property="que_max_num" column="que_max_num" />
+		<result property="que_ess_type" column="que_ess_type" />
+		<result property="que_ess_visible" column="que_ess_visible" />
+		<result property="que_max_type" column="que_max_type" />
+		<result property="que_min_type" column="que_min_type" />
+		<result property="que_num" column="que_num" />
+		<result property="q_rnk" column="q_rnk" />
+		<result property="last_page_num" column="last_page_num" />
+		<collection property="surveyOptionList" javaType="List" resultMap="optionList">
+		</collection>
+	</resultMap>
+
+	<select id="getSurveyList" resultType="egovframework.hhg.survey.vo.SurveyVO" parameterType="egovframework.hhg.survey.vo.SurveyVO">
+			SELECT
+			       ROWNUM AS SUR_NUM
+			      ,SUR_ID
+			      ,USER_ID
+			      ,SUR_TITLE
+			      ,SUR_START_DT
+			      ,SUR_END_DT
+			      ,SUR_DEL_YN
+			      ,SUR_LOGIN_YN
+			  FROM TB_SURVEY
+			  WHERE TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') BETWEEN SUR_START_DT AND SUR_END_DT
+			 ORDER BY ROWNUM DESC
+	</select>
+
+	<select id="getSurveyPost" resultType="egovframework.hhg.survey.vo.SurveyVO" parameterType="egovframework.hhg.survey.vo.SurveyVO">
+			SELECT 
+				  SUR_ID
+			     ,USER_ID
+			     ,SUR_TITLE
+			     ,SUR_FIRST_DT
+			     ,SUR_MOD_DT
+			     ,TO_CHAR(TO_DATE(SUR_START_DT, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD') AS START_DT
+			     ,TO_CHAR(TO_DATE(SUR_END_DT, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD') AS END_DT
+			     ,TO_CHAR(TO_DATE(SUR_START_DT, 'YYYY-MM-DD HH24:MI:SS'), 'YY-MM-DD"("DY")"') AS STARTDAY
+			     ,TO_CHAR(TO_DATE(SUR_END_DT, 'YYYY-MM-DD HH24:MI:SS'), 'YY-MM-DD"("DY")"') AS ENDDAY
+			     ,TO_CHAR(TO_DATE(SUR_END_DT, 'YYYY-MM-DD HH24:MI:SS') + INTERVAL '3' DAY, 'YY-MM-DD"("DY")"') AS ENDDAY_RESULT
+			     ,TRUNC(TO_DATE(SUR_END_DT, 'YYYY-MM-DD HH24:MI:SS') - TO_DATE(SUR_START_DT, 'YYYY-MM-DD HH24:MI:SS') + 1) AS DT
+			     ,SUR_DEL_YN
+			     ,SUR_LOGIN_YN
+			     ,(SELECT COUNT(*) FROM TB_QUESTION B WHERE B.SUR_ID = SUR_ID AND B.QUE_PAR_ID IS NULL) AS SUR_CNT
+			     ,SUR_SUBMIT_CNT
+			 FROM TB_SURVEY
+			WHERE SUR_ID = #{sur_id}
+	</select>
+	
+	<select id="getTotal" resultType="int" parameterType="int">
+			SELECT COUNT(QUE_ID) FROM (
+			SELECT
+				  A.SUR_ID
+				  ,A.QUE_ID
+				  ,A.CATE_ID
+				  ,A.QUE_CONTENT
+				  ,A.QUE_TYPE
+				  ,A.QUE_PAR_ID
+				  ,A.QUE_DT
+				  ,A.QUE_UP_DT
+				  ,A.QUE_DEL_YN
+				  ,A.QUE_PAGE_NUM
+				  ,A.QUE_ESS_TYPE
+			  FROM TB_QUESTION A
+			  WHERE A.QUE_ESS_TYPE = 'Y'
+			  START WITH QUE_PAR_ID IS NULL
+			  CONNECT BY PRIOR A.QUE_ID = A.QUE_PAR_ID
+				)
+			  WHERE SUR_ID = #{sur_id}
+	</select>
+	
+	<select id="getSurveyQueList" resultMap="questionList">
+			SELECT
+			  	   ROWNUM AS QUE_ROW
+				  ,A.SUR_ID
+				  ,A.QUE_ID
+				  ,A.CATE_ID
+				  ,A.QUE_NUM
+				  ,ROW_NUMBER() OVER(PARTITION BY A.QUE_PAR_ID ORDER BY A.QUE_ID ASC) AS Q_RNK
+				  ,A.QUE_CONTENT
+				  ,A.QUE_TYPE
+				  ,A.QUE_PAR_ID
+				  ,A.QUE_DT
+				  ,A.QUE_UP_DT
+				  ,A.QUE_DEL_YN
+				  ,A.QUE_ESS_TYPE
+				  ,A.QUE_ESS_VISIBLE
+				  ,A.QUE_MIN_TYPE
+				  ,A.QUE_MAX_TYPE
+				  ,A.QUE_PAGE_NUM
+			  FROM TB_QUESTION A
+			  WHERE A.SUR_ID = #{sur_id}
+			  ORDER BY A.QUE_ID ASC
+	</select>
+	
+	<select id="getSurveyLastPage" resultType="int" parameterType="int">
+		 SELECT MAX(QUE_PAGE_NUM) AS LAST_PAGE_NUM FROM TB_QUESTION WHERE SUR_ID = #{sur_id}
+	</select>
+	
+	<select id="getSurveyOption" resultType="egovframework.hhg.survey.vo.SurveyUtileVO">
+			SELECT
+				  A.OPTION_ID
+				 ,A.OPTION_NM
+				 ,A.OPTION_TYPE
+				 ,A.QUE_ID
+		      FROM
+		         TB_OPTION A
+	</select>
+	
+	<select id="getSurveyCate" resultType="egovframework.hhg.survey.vo.SurveyUtileVO">
+			SELECT
+				  CATE_ID
+				 ,CATE_NM
+			  FROM
+			     TB_CATEGORY
+	</select>
+	
+	<select id="getSurveySubmit" parameterType="int" resultType="int">
+		 SELECT *
+		   FROM (
+		 SELECT
+		   CASE WHEN COUNT(USER_ID) = 0 THEN 0 ELSE 1 END AS RESULT <!-- 없으면 0 있으면 1 -->
+		   FROM TB_ANSWER WHERE USER_ID = #{user_id}
+		   		)
+	</select>
+	
+	<select id="getSurveyAnwser" resultType="egovframework.hhg.survey.vo.SurveyUtileVO">
+			SELECT
+				  A.ANS_SEQ
+				 ,A.QUE_ID
+				 ,A.OPTION_ID
+				 ,A.USER_ID
+				 ,A.ANS_CON
+				 ,A.ANS_ETC_CON
+				 ,A.ANS_DT
+				 ,A.ANS_UP_DT
+				 ,A.ANS_UP_USER_ID
+				 ,A.SUR_ID
+			  FROM TB_ANSWER A
+			 WHERE A.USER_ID = #{user_id}
+			   AND A.SUR_ID = #{sur_id}
+	</select>
+	
+	<insert id="getSurveyInsert" parameterType="egovframework.hhg.survey.vo.SurveyAnswerVO">
+			INSERT INTO TB_ANSWER
+					(
+					ANS_SEQ,
+					QUE_ID,
+					SUR_ID,
+					OPTION_ID,
+					USER_ID,
+					ANS_CON,
+					ANS_DT,
+					ANS_ETC_CON
+					)
+					values
+					(
+					SEQ_ANS.NEXTVAL,
+					#{que_id},
+					#{sur_id},
+					#{option_id, jdbcType=INTEGER},
+					#{user_id, jdbcType=INTEGER},
+					#{ans_con, jdbcType=VARCHAR},
+					TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
+					#{ans_etc_con, jdbcType=VARCHAR}
+					)
+	</insert>
+
+	<update id="getSurveyUpdate" parameterType="egovframework.hhg.survey.vo.SurveyAnswerVO">
+			 UPDATE TB_ANSWER 
+			    SET ANS_UP_USER_ID = #{user_id}, 
+			 OPTION_ID = #{option_id, jdbcType=INTEGER}, 
+			 ANS_CON = #{ans_con, jdbcType=VARCHAR},
+			 ANS_ETC_CON = #{ans_etc_con, jdbcType=VARCHAR},
+			 ANS_UP_DT = TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			 WHERE USER_ID = #{user_id} 
+			   AND QUE_ID = #{que_id}
+			   <if test="option_id != null">			   
+			   AND OPTION_ID = #{option_id, jdbcType=INTEGER}
+			   </if>
+	</update>
+	
+	<delete id="getSurveyDelete" parameterType="egovframework.hhg.survey.vo.SurveyAnswerVO">
+		     DELETE TB_ANSWER
+		      WHERE USER_ID = #{user_id}
+		        AND SUR_ID = #{sur_id}
+	</delete>
+
+</mapper>

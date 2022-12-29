@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.hhg.gallery.service.GalleryMapper">
+
+		<sql id="search">
+			<if test="searchKey == 'title'">
+              AND A.B_TITLE LIKE '%'||#{searchVal}||'%'
+            </if>
+            <if test="searchKey == 'writer_id'">
+              AND B.U_NCNM LIKE '%'||#{searchVal}||'%'
+            </if>
+            <if test="searchKey == 'content'">
+              AND A.B_CONTENT LIKE '%'||#{searchVal}||'%'
+            </if>
+   		    <if test="searchKey == 'tag'">
+		      AND A.BOARD_ID IN (SELECT BOARD_ID FROM TB_TAG_BOARD WHERE TAG_NAME LIKE '%'||#{searchVal}||'%')
+		    </if>
+<!--             <if test="searchKey == 'all'">
+              AND A.B_TITLE LIKE '%'||#{searchVal}||'%'
+               OR B.U_NCNM LIKE '%'||#{searchVal}||'%'
+               OR A.B_CONTENT LIKE '%'||#{searchVal}||'%'
+               OR A.BOARD_ID IN (SELECT BOARD_ID FROM TB_TAG_BOARD WHERE TAG_NAME LIKE '%'||#{searchVal}||'%')
+           	</if> -->
+           	<!-- 이름, 내용, 제목 동시에 -->
+		</sql>
+
+		<select id="getGalleryCount" resultType="_int">
+		<![CDATA[
+			SELECT COUNT(*) FROM
+        		 (		SELECT
+ 				ROWNUM AS BOARD_NUM
+         	  , A.BOARD_ID
+         	  , A.B_WRITER_ID
+         	  , U_NCNM AS NICKNAME
+         	  , A.B_TITLE
+         	  , A.B_CONTENT
+         	  
+         	  , A.B_BOARD_CNT
+         	  , A.B_DEL_YN
+         	  , A.B_REGIST_DT
+         	  , A.B_UPDATE_DT
+         	  
+         	  , A.B_RCOUNT
+         	  , A.B_TYPE
+         	  , A.M_SEQ
+         	  
+ 			  , (select C.F_NAME from TB_ATTACH C where C.board_id = A.board_id AND F_DEL_YN  = 'N' and ROWNUM <= 1) as F_NAME
+         	  , (select C.F_UUID from TB_ATTACH C where C.board_id = A.board_id AND F_DEL_YN  = 'N' and ROWNUM <= 1) as F_UUID  
+          FROM TB_BOARD A
+        	  , TB_USER B
+		 WHERE A.B_WRITER_ID = B.USER_ID
+		   AND A.B_TYPE = 1002
+		   AND A.B_DEL_YN = 'N'
+		   AND A.M_SEQ = #{m_seq}
+         ]]>
+		   	<include refid="search" />
+         ORDER BY A.BOARD_ID DESC
+         )
+		</select>
+		<select id="getGalleryList" resultType="egovframework.hhg.board.vo.BoardVO" parameterType="egovframework.hhg.board.vo.BoardVO">
+			 <![CDATA[
+			 SELECT * FROM(
+			 	SELECT ROWNUM AS BOARD_NUM, A.* FROM
+ 					(SELECT
+ 				A.BOARD_ID
+         	  , A.B_WRITER_ID
+         	  , U_NCNM AS NICKNAME
+         	  , A.B_TITLE
+         	  , A.B_CONTENT
+         	  
+         	  , A.B_BOARD_CNT
+         	  , A.B_DEL_YN
+         	  , A.B_REGIST_DT
+         	  , A.B_UPDATE_DT
+         	  
+         	  , A.B_RCOUNT
+         	  , A.B_TYPE
+         	  , A.M_SEQ
+         	  
+         	  , (SELECT C.F_NAME FROM TB_ATTACH C WHERE C.BOARD_ID = A.BOARD_ID AND F_DEL_YN  = 'N' AND ROWNUM <= 1) AS F_NAME
+         	  , (SELECT C.F_UUID FROM TB_ATTACH C WHERE C.BOARD_ID = A.BOARD_ID AND F_DEL_YN  = 'N' AND ROWNUM <= 1) AS F_UUID  
+          	  , NVL((SELECT COUNT(*) FROM TB_HEART WHERE A.BOARD_ID = BOARD_ID GROUP BY BOARD_ID), 0) AS B_LIKE
+          FROM TB_BOARD A
+        	  , TB_USER B
+		 WHERE A.B_WRITER_ID = B.USER_ID
+		   AND A.B_TYPE = 1002
+		   AND A.B_DEL_YN = 'N'
+		   AND A.M_SEQ = #{m_seq}
+          ]]>
+		   	<include refid="search" />
+          ORDER BY BOARD_ID DESC
+         ) A )
+          WHERE BOARD_NUM BETWEEN #{firstIndex} AND #{lastIndex}
+		</select>
+		<select id="searchGalleryList" resultType="boardVo" parameterType="boardVo">
+		 <![CDATA[
+		SELECT * FROM
+			(SELECT
+ 				ROWNUM AS BOARD_NUM
+         	  , A.BOARD_ID
+         	  , A.B_WRITER_ID
+
+         	  , U_NCNM AS NICKNAME
+         	  , A.B_TITLE
+         	  , A.B_CONTENT
+         	  
+         	  , A.B_BOARD_CNT
+         	  , A.B_DEL_YN
+         	  , A.B_REGIST_DT
+         	  , A.B_UPDATE_DT
+         	  
+         	  , A.B_RCOUNT
+         	  , A.B_TYPE
+         	  , A.M_SEQ
+         	  
+         	  , (select C.F_NAME from TB_ATTACH C where C.board_id = A.board_id AND F_DEL_YN  = 'N' and ROWNUM <= 1) as F_NAME
+         	  , (select C.F_UUID from TB_ATTACH C where C.board_id = A.board_id AND F_DEL_YN  = 'N' and ROWNUM <= 1) as F_UUID  
+              , NVL((SELECT COUNT(*) FROM TB_HEART WHERE A.BOARD_ID = BOARD_ID GROUP BY BOARD_ID), 0) AS B_LIKE
+          FROM TB_BOARD A
+        	  , TB_USER B
+		 WHERE A.B_WRITER_ID = B.USER_ID
+		   AND A.B_TYPE = 1002
+   		   AND A.B_DEL_YN = 'N'
+   		   AND A.M_SEQ = #{m_seq}
+         ]]>
+		   <include refid="search" />
+        )
+         WHERE BOARD_NUM BETWEEN #{firstIndex} AND #{lastIndex}
+         ORDER BY BOARD_ID DESC
+		</select>
+		<select id="galleryPost" resultType="boardVo" parameterType="boardVo">
+          		SELECT A.BOARD_ID
+         	  , A.B_TITLE
+         	  , A.B_CONTENT
+         	  , (SELECT U_NCNM FROM TB_USER WHERE USER_ID = A.B_WRITER_ID) AS NICKNAME
+         	  , A.B_WRITER_ID
+         	  , A.B_BOARD_CNT
+
+         	  , A.B_DEL_YN
+         	  , A.B_REGIST_DT
+         	  , A.B_UPDATE_DT
+         	  , A.M_SEQ
+         	  
+         	  , A.B_GRP_NO
+         	  , A.B_TYPE
+         	  , A.B_RCOUNT
+          FROM TB_BOARD A
+          WHERE A.B_DEL_YN = 'N'
+            AND A.BOARD_ID = #{board_id}
+            AND A.M_SEQ = #{m_seq}
+		</select>
+		<select id="galleryImgList" resultType="boardVo" parameterType="boardVo">
+         SELECT
+         			B.BOARD_ID
+         			, B.F_NAME
+         			, B.F_PATH
+         			, B.F_SIZE
+         			, B.F_NUM
+         			, B.F_UUID
+         			, B.F_DEL_YN
+         			, B.F_CNT
+          FROM  TB_BOARD A
+          	   ,TB_ATTACH B
+          WHERE A.B_DEL_YN = 'N'
+            AND A.BOARD_ID = B.BOARD_ID
+            AND A.BOARD_ID = #{board_id}
+		</select>
+		<insert id="galleryInsertProc" parameterType="egovframework.hhg.board.vo.BoardVO">
+				<selectKey keyProperty="board_id" order="BEFORE" resultType="int">
+					SELECT SEQ_BOARD.NEXTVAL FROM DUAL
+				</selectKey>
+			INSERT INTO TB_BOARD
+			   (
+			   BOARD_ID,
+			   B_WRITER_ID,
+			   B_TITLE,
+			   B_CONTENT,
+			   B_BOARD_CNT,
+			   B_DEL_YN,
+			   B_REGIST_DT,
+			   B_UPDATE_DT,
+			   B_TYPE,
+			   M_SEQ
+			   )
+		VALUES (
+			   #{board_id}
+			   ,#{b_writer_id}	
+			   ,#{b_title}
+			   ,#{b_content}
+			   ,0
+			   ,'N'
+			   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			   ,1002
+			   ,#{m_seq}
+		   )
+		</insert>
+		<insert id="getFileInsertProc" parameterType="boardVo">
+					INSERT INTO TB_ATTACH
+				   (
+				   	F_NUM,
+				   	BOARD_ID,
+				   	F_SIZE,
+				   	F_UUID,
+				   	F_NAME,
+				   	F_REG_DT,
+				   	F_PATH,
+				   	F_DEL_YN
+				    )
+			VALUES (
+					SEQ_FILE.NEXTVAL,
+					#{board_id},
+					#{f_size},
+					#{f_uuid},
+					#{f_name},
+					TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
+					#{f_path},
+					'N'
+					)
+		</insert>
+		<insert id="insertTagList" parameterType="string">
+			INSERT INTO TB_TAG_BOARD
+					(
+					TAG_ID,
+					BOARD_ID,
+					TAG_NAME
+					)
+			VALUES (
+					SEQ_TAG.NEXTVAL,
+					SEQ_BOARD.CURRVAL,
+					#{tag_name}
+					)
+		</insert>
+		<select id="getFile" parameterType="int" resultType="boardVo">
+		    SELECT F_NUM
+		         , F_UUID
+		         , F_NAME
+		         , F_SIZE
+		         , F_PATH
+             	 , F_CNT
+		    FROM TB_ATTACH
+		    WHERE F_NUM = #{f_num}
+		</select>
+		<update id="galleryPostUp" parameterType="boardVo">
+			UPDATE TB_BOARD
+			   SET B_TITLE = #{b_title}, B_CONTENT = #{b_content}
+			 WHERE BOARD_ID = #{board_id}
+		</update>
+		<delete id="tagDe" parameterType="boardVo">
+			DELETE FROM TB_TAG_BOARD
+				  WHERE TAG_ID = #{tag_id}
+		</delete>
+		<insert id="tagUp" parameterType="boardVo">
+			INSERT INTO TB_TAG_BOARD
+			       (
+			       	TAG_ID,
+			       	TAG_NAME,
+			       	BOARD_ID
+			       )
+			VALUES (
+				   	SEQ_TAG.NEXTVAL,
+				   	#{tag_name},
+				   	#{board_id}
+				   )
+		</insert>
+		<update id="fileDe" parameterType="boardVo">
+			UPDATE TB_ATTACH
+ 			   SET F_DEL_YN = 'Y'
+			 WHERE F_NUM = #{f_num}
+		</update>
+		<update id="increaseDownHit" parameterType="int">
+			UPDATE TB_ATTACH
+			   SET F_CNT = F_CNT + 1
+			 WHERE F_NUM = #{f_num}
+		</update>
+		<select id="getTagListView" parameterType="egovframework.hhg.board.vo.BoardVO" resultType="boardVo">
+			SELECT TAG_NAME
+				  ,TAG_ID
+				  ,BOARD_ID
+		      FROM TB_TAG_BOARD
+		      ORDER BY TAG_ID
+		</select>
+		<select id="getTagList" parameterType="boardVo" resultType="boardVo">
+			SELECT TAG_NAME
+			      ,TAG_ID
+			      ,BOARD_ID
+			  FROM TB_TAG_BOARD
+			 WHERE BOARD_ID = #{board_id}
+		</select>
+		<insert id="heartCheck" parameterType="boardVo">
+			INSERT INTO TB_HEART (board_id, user_id, heart_id)
+				   VALUES (#{board_id}, #{b_writer_id}, SEQ_LIKE.NEXTVAL)
+		</insert>
+		<select id="getHeartCnt" resultType="int" parameterType="boardVo">
+           SELECT COUNT(*) AS B_LIKE
+             FROM TB_HEART_LOG
+            WHERE BOARD_ID = #{board_id}
+              AND USER_ID = #{b_writer_id}
+              AND H_DEL_YN = 'N'
+		</select>
+		<delete id="heartDelCheck" parameterType="boardVo">
+			DELETE TB_HEART
+			 WHERE BOARD_ID = #{board_id}
+			   AND USER_ID = #{b_writer_id}
+		</delete>
+		<insert id="heartLogInsert" parameterType="boardVo">
+			INSERT INTO TB_HEART_LOG (H_SEQ, BOARD_ID, USER_ID, H_REGIST_DT, H_UPDATE_DT, H_DEL_YN)
+			VALUES (SEQ_HEART.NEXTVAL, #{board_id}, #{b_writer_id}, TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'), TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'), 'N')
+		</insert>
+		<update id="heartLogUpdate" parameterType="boardVo">
+			UPDATE TB_HEART_LOG
+			   SET H_UPDATE_DT = TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			   ,   H_DEL_YN = #{h_del_yn}
+			 WHERE USER_ID = #{b_writer_id}	AND BOARD_ID = #{board_id}
+		</update>
+</mapper>

@@ -1,0 +1,296 @@
+@charset "UTF-8";
+
+@media screen and (max-width: 1000px) {
+	#top-btn {
+		display: none;
+	}
+	.nav-bar {
+		display: block !important;
+		margin-bottom: 5px;
+	    margin-right: 5vw;
+	}
+	#container-img {
+	    height: 180px;
+   		background-repeat: no-repeat;
+   		margin-top: 44px;	
+   		
+   		background-size : cover;
+	}
+	#container {
+		background-image: none;
+		display: block;
+	}
+	#container, #sub-container {
+		width: 100%;
+		height: 100%;
+		min-width: 100%;
+	}
+	#sub-container {
+		padding-bottom: 0px;
+	}
+	#header #nav {
+		text-align: left;
+		background: #fff;
+		
+		position: relative;
+		height: 44px;
+		width: 100%;
+		
+		display: inline-block;
+	}
+	#header #nav #nav-first-box,
+	#header #nav #nav-second-box {
+		display: none;
+	}
+	#header #nav #nav-left-box {
+		width: auto;
+		padding: 10px !important; 
+		
+	   	display: flex;
+	   	flex-direction: row;
+	   	justify-content: space-between;
+    }
+	#header #nav #nav-left-box img {
+		display: inline-block;
+		width: 25%;
+		padding: 0;
+	}
+	#header #nav #nav-left-box img:first-child {
+		margin-left: 20px; 
+	}
+	#header #nav #nav-left-box img:last-child {
+		display: block;
+		width: 15%;
+	}
+	.content-wrap {
+		display: inline-block;
+		width: 100%;
+	}
+	.content-wrap div:nth-child(1) {
+		float: left;
+	}
+	.content-wrap .arrow-after::after {
+		left: 49%;
+	}
+	.content-wrap div:nth-child(2) {
+		margin-top: 0px;
+		padding: 5px;
+	}
+	.content-wrap div:nth-child(2) h1{
+		font-size: 16px;
+	}
+	#container #title {
+   		display: block;	
+   		height: 180px;
+   		
+   		width: 100%;
+		padding: 20px;
+		text-align: center;
+	}
+	#container #title p:nth-child(2) {
+		float: none;
+	}
+	#container #title p:last-child {
+		clear: both;
+	}
+	#container #title p:nth-child(1), #container #title p:nth-child(2) {
+		font-size: 30px;
+	}
+	#container #title p:last-child {
+		margin-top: 10px;
+	}
+	#container #title div:last-child {
+		display: block;
+		height: 100%;
+	}
+	#container #title div p:first-child {
+	    font-size: 50px;
+    	font-weight: 900;
+    }
+    #container #title div p:nth-child(2) {
+    	margin: 0;
+    }
+	#container #title div:last-child {
+		display: block;
+	}
+	/* aside */
+	aside {
+		display: none;
+	}
+	#sub-container #sub-main .content1, #sub-container #sub-main .content3 {
+		float: left;
+	    width: 50%;
+	}
+	#sub-container #sub-main .content1 img {
+		width: 100%;
+	    height: 100%;
+    	object-fit: fill;	
+	}
+	.content-wrap > div, #sub-main .sub-content-wrap > div {
+		width: 50%;
+		height: 25vh;
+	    min-height: 226px;
+	}
+	/* grid */
+	#sub-container #sub-main {
+		display: inline-block;
+		width: 100%;
+	}
+	#sub-container #sub-main div {
+	    width: 50%;
+	    height: 25vh;
+	    min-height: 226px;
+	}
+	.content-wrap .arrow-after {
+		padding: 0 25px;
+	}
+	.content-wrap div label {
+		font-size: 13px;
+	}
+	.content-wrap div select {
+		height: 30px;
+	}
+	.content-wrap .btn-wrap {
+		margin-top: 5px !important;
+	}
+	.content-wrap .btn-wrap button {
+		min-height: 30px !important;
+	}
+	#sub-container #sub-main .content3 {
+		padding: 10px;
+		
+	    display: flex;
+	    flex-direction: column;
+	    justify-content: space-around;
+	}
+	#sub-container #sub-main .content3 p:first-child {
+		font-size: 18px;
+		padding: 5px 0;
+	}
+	#sub-container #sub-main .content3 img {
+		width: 120px;
+		vertical-align: middle;
+	}
+	#sub-container #sub-main .content3 p:nth-child(2) {
+		text-align: center;
+	}
+	#sub-container #sub-main .content3 p:last-child {
+		font-size: 15px;
+		padding: 8px 0;
+	}
+	#sub-container #sub-main .content2 p:nth-child(2) {
+		overflow-y: scroll;
+	}
+	footer {
+		height: 68px;
+	}
+	footer div {
+		margin-bottom: 0px;
+	}
+	footer p {
+		font-size: 15px;
+	}
+	footer div img {
+		width: 25px;
+		margin-right: 10px;
+	}
+}
+
+@media screen and (max-width: 420px) {
+	.content-wrap > div, #sub-main .sub-content-wrap > div {
+	    height: 22vh;
+	    min-height: 190px;
+	}
+	.content-wrap div:nth-child(2) h1{
+		font-size: 13px;
+	}
+	.content-wrap div:nth-child(2) img {
+		width: 100px;
+	}
+	
+	.content-wrap div select {
+		width: 100%;
+		min-height: 35px;
+		
+    	text-align: left;
+    	margin-top: 10px;
+	}
+	.content-wrap .arrow-after {
+		padding: 8px 15px;
+		text-align: center;
+	}
+	.content-wrap .arrow-after::after {
+		width: 20px;
+		top: 40%;
+	}
+	.content-wrap div label {
+		font-size: 8px;
+		display: none;
+	}
+	.content-wrap .arrow-after .btn-wrap {
+		margin-top: 0px;
+	}
+	.content-wrap .arrow-after .btn-wrap button {
+		width: 19vw;
+		height: 20px;
+		font-size: 9px;
+	}
+	#sub-container #sub-main div {
+		height: 22vh;
+		min-height: 190px;
+	}
+	#sub-container #sub-main .content2 {
+		padding: 15px;
+	}
+	#sub-container #sub-main .content2 p {
+		padding: 8px 0;
+	}
+	#sub-container #sub-main .content2 p:first-child {
+		font-size: 15px;
+	}
+	#sub-container #sub-main .content2 p:nth-child(2), #sub-container #sub-main .content2 p:last-child {
+		font-size: 12px;
+	}
+	#sub-container #sub-main .content3 {
+		padding: 10px;
+	}
+	#sub-container #sub-main .content3 p:first-child {
+		font-size: 13px;
+		padding: 5px 0;
+	}
+	#sub-container #sub-main .content3 img {
+		width: 70px;
+		vertical-align: middle;
+	}
+	#sub-container #sub-main .content3 p:nth-child(2) {
+		text-align: center;
+	}
+	#sub-container #sub-main .content3 p:last-child {
+		font-size: 11px;
+		padding: 3px 0;
+	}
+	#sub-container #sub-main .content4 img {
+		width: 50px;
+		vertical-align: middle;
+	}
+	#sub-container #sub-main .content2 p:nth-child(2) {
+		overflow-y: scroll;
+	}
+	#modal #modal-body {
+		min-width: 290px;
+		min-height: 290px;
+		
+		width: 10vw;
+		height: 10vh;
+	}
+	#modal #modal-body #modal-close {
+		padding: 10px;
+		margin-bottom: 0;
+	}
+	#modal #modal-body #modal-close p {
+	    margin-left: 10px;
+	}
+	#modal #modal-body #modal-close img {
+		width: 21px;
+	}
+}

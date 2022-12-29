@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.hhg.reply.service.ReplyMapper">
+
+
+	<select id="getReplyList" resultType="egovframework.hhg.reply.vo.ReplyVO" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+		SELECT REPLY_ID
+			  ,A.R_BOARD_ID
+			  ,A.R_USER_ID
+			  ,LEVEL AS R_LEVEL
+			  ,U_NCNM AS R_WRITER
+			  ,A.R_CONTENT
+			  ,A.R_REGIST_DT
+			  ,A.R_UPDATE_DT
+			  ,A.R_PAR_NO
+			  ,A.R_DEL_YN
+		  FROM TB_REPLY A
+		  	  ,TB_USER B
+		 WHERE R_BOARD_ID = #{r_board_id}
+		   AND A.R_USER_ID = B.USER_ID
+		 START WITH R_PAR_NO IS NULL
+		 CONNECT BY PRIOR REPLY_ID = R_PAR_NO
+		 ORDER SIBLINGS BY REPLY_ID
+	</select>
+	
+	<insert id="ReplyInsertProc" parameterType="egovframework.hhg.reply.vo.ReplyVO">
+		INSERT INTO TB_REPLY
+		VALUES (
+				SEQ_REPLY.NEXTVAL
+			   ,#{r_board_id}
+			   ,#{r_user_id}
+			   ,#{r_content}
+  		 	   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+ 		 	   ,TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+ 		 	   ,#{reply_id, jdbcType=INTEGER}
+ 		 	   ,'N'
+				)
+	</insert>
+</mapper>

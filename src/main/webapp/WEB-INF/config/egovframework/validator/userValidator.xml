@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE form-validation PUBLIC 
+    "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1//EN" 
+    "http://jakarta.apache.org/commons/dtds/validator_1_1.dtd">
+
+<form-validation>
+
+    <formset>
+        <form name="userVo">
+        	<field property="u_ncnm" depends="required, maxlength">
+   		        <arg0 key="일반회원닉네임" resource="true"/>
+                <arg1 key="6" resource="true"/>
+                <var>
+                <var-name>maxlength</var-name>
+                <var-value>12</var-value>
+                </var>
+			</field>
+			<field property="u_id" depends="required, maxlength, mask">
+                <arg0 key="일반회원아이디" resource="true"/>
+                <arg1 key="20" resource="true"/>
+                <var>
+                <var-name>maxlength</var-name>
+                <var-value>50</var-value>
+                </var>
+            </field>
+        	<field property="u_pwd" depends="required">
+        		<arg0 key="비밀번호" resource="true" />
+			</field>
+        </form>
+    </formset>
+
+</form-validation>
